@@ -1,0 +1,27 @@
+name: Daily content reminder
+
+on:
+  schedule:
+    - cron: "30 3 * * *"   # 9:00 AM IST every day
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build today's post brief
+        id: brief
+        run: python3 scripts/todays_post.py
+      - name: Create GitHub issue for today's post
+        if: steps.brief.outputs.has_post == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "${{ steps.brief.outputs.title }}" \
+            --body-file post_brief.md
